@@ -1,0 +1,4 @@
+Python: 3.13.0
+Sistema: Darwin 25.5.0
+Macchina: arm64
+Processore: arm

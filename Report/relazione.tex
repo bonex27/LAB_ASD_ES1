@@ -13,7 +13,6 @@
 \usepackage{caption}
 \usepackage{hyperref}
 \usepackage{array}
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \lstset{
     basicstyle=\ttfamily\small,
@@ -96,11 +95,10 @@ KMP & $O(m)$ & $O(n)$ & $O(n+m)$ & $O(m)$ \\
 \section{Documentazione del codice}
 \subsection{Struttura dei moduli}
 La struttura del progetto è riportata nella tabella~\ref{tab:moduli}. La figura~\ref{fig:moduli} mostra invece le dipendenze principali tra i moduli.
-
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{L{0.32\textwidth}L{0.58\textwidth}}
+\begin{tabular}{p{0.32\textwidth}p{0.58\textwidth}}
 \toprule
 Modulo & Responsabilità \\
 \midrule
@@ -128,7 +126,7 @@ Il progetto usa due semplici strutture dati, definite come \texttt{dataclass}, p
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{L{0.25\textwidth}L{0.25\textwidth}L{0.4\textwidth}}
+\begin{tabular}{p{0.25\textwidth}p{0.25\textwidth}p{0.4\textwidth}}
 \toprule
 Classe & Campi & Significato \\
 \midrule
@@ -164,7 +162,7 @@ Prima degli esperimenti sono stati eseguiti controlli di correttezza su casi pic
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{L{0.38\textwidth}L{0.46\textwidth}}
+\begin{tabular}{p{0.38\textwidth}p{0.46\textwidth}}
 \toprule
 Caso testato & Motivazione \\
 \midrule
@@ -204,9 +202,9 @@ Gli esperimenti allegati sono stati eseguiti nell'ambiente riportato nella tabel
 Voce & Valore \\
 \midrule
 Versione Python & 3.13.0 \\
-Sistema operativo & Darwin 25.5.0 (macOs 26.5)\\
-Architettura & ARM64 \\
-Processore & non Apple Silicon M1 Pro \\
+Sistema operativo & Darwin 25.5.0 (macOS 26.5) \\
+Architettura & Arm64 \\
+Processore & Apple Silicon M1 Pro \\
 RAM & 16.0 GB \\
 Timer usato & \texttt{time.perf\_counter()} \\
 Ripetizioni per configurazione & 7 \\

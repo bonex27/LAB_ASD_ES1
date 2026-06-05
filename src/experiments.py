@@ -16,6 +16,7 @@ import platform
 import shutil
 import statistics
 import time
+import argparse
 from typing import Callable, Dict, Iterable, List, Tuple
 
 from generators import many_matches_case, naive_worst_case, periodic_case, random_case
@@ -191,6 +192,8 @@ def write_latex_summary_table(summary: List[Dict[str, object]], path: str) -> No
 
 def try_make_plots(rows: List[Dict[str, object]], out_dir: str) -> None:
     try:
+        import matplotlib
+        matplotlib.use("Agg")
         import matplotlib.pyplot as plt
     except ImportError:
         print("matplotlib non installato: salto la generazione dei grafici.")
@@ -250,21 +253,33 @@ def sync_report_resources(base_dir: str, results_dir: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Confronto tra algoritmo ingenuo e KMP per string matching.")
+    parser.add_argument("--quick", action="store_true", help="esegue una versione ridotta degli esperimenti, utile su PythonAnywhere free")
+    args = parser.parse_args()
+
     run_correctness_checks()
-    sizes = [500, 1000, 2000, 4000, 8000, 16000]
-    pattern_lengths = [4, 8, 16, 32]
-    repeats = 7
+    if args.quick:
+        sizes = [500, 1000, 2000, 4000]
+        pattern_lengths = [4, 8, 16, 32]
+        repeats = 3
+    else:
+        sizes = [500, 1000, 2000, 4000, 8000, 16000]
+        pattern_lengths = [4, 8, 16, 32]
+        repeats = 7
     rows = generate_rows(sizes, pattern_lengths, repeats)
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     results_dir = os.path.join(base_dir, "results")
     write_csv(rows, os.path.join(results_dir, "string_matching_results.csv"))
-    summary = make_summary(rows, n=16000, m=32)
+    summary_n = 4000 if args.quick else 16000
+    summary = make_summary(rows, n=summary_n, m=32)
     write_csv(summary, os.path.join(results_dir, "summary_n16000_m32.csv"))
     write_latex_summary_table(summary, os.path.join(base_dir, "report", "resources", "tables", "summary_n16000_m32.tex"))
     write_platform_info(os.path.join(results_dir, "platform_info.txt"))
     try_make_plots(rows, os.path.join(results_dir, "figures"))
     sync_report_resources(base_dir, results_dir)
     print(f"Esperimenti completati: {len(rows)} righe generate.")
+    print(f"Risultati salvati in: {results_dir}")
+    print("Grafici salvati in: results/figures e report/resources/figures")
 
 
 if __name__ == "__main__":
