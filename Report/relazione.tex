@@ -6,7 +6,6 @@
 \usepackage[a4paper,left=3.0cm,right=3.0cm,top=2.5cm,bottom=2.5cm]{geometry}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{longtable}
 \usepackage{amsmath,amssymb}
 \usepackage{float}
 \usepackage{xcolor}
@@ -43,7 +42,7 @@ Il confronto non si limita alla sola verifica della correttezza. L'obiettivo pri
 \subsection{Algoritmo ingenuo}
 L'algoritmo ingenuo prova tutti gli allineamenti possibili del pattern rispetto al testo. Per ogni posizione $s$ compresa tra $0$ e $n-m$, confronta i caratteri $P[0], P[1], \ldots, P[m-1]$ con la sottostringa $T[s], T[s+1], \ldots, T[s+m-1]$ finché trova una differenza oppure finché tutto il pattern viene riconosciuto.
 
-Nel caso peggiore, ogni allineamento può richiedere quasi $m$ confronti. La complessità temporale attesa nel caso peggiore è quindi:
+Nel caso peggiore, ogni allineamento può richiedere quasi $m$ confronti. La complessità temporale nel caso peggiore è quindi:
 \[
     O((n-m+1)m),
 \]
@@ -57,12 +56,45 @@ Durante la scansione del testo, quando avviene un mismatch, KMP non riparte nece
     O(n + m).
 \]
 
+\subsection{Esempio della funzione prefisso}
+Per rendere più chiaro il preprocessing di KMP, la tabella~\ref{tab:prefisso} mostra il calcolo della funzione prefisso per il pattern \texttt{ABABACA}. Per esempio, in posizione 4 la sottostringa considerata è \texttt{ABABA}: il più lungo prefisso proprio che è anche suffisso è \texttt{ABA}, quindi il valore della funzione prefisso è 3.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrrrrrrr}
+\toprule
+Indice $q$ & 0 & 1 & 2 & 3 & 4 & 5 & 6 \\
+\midrule
+Carattere $P[q]$ & A & B & A & B & A & C & A \\
+$\pi[q]$ & 0 & 0 & 1 & 2 & 3 & 0 & 1 \\
+\bottomrule
+\end{tabular}
+\caption{Esempio di funzione prefisso per il pattern \texttt{ABABACA}.}
+\label{tab:prefisso}
+\end{table}
+
 \subsection{Prestazioni attese}
 Sui testi casuali, soprattutto con alfabeti grandi, ci si aspetta che l'algoritmo ingenuo non sia sempre molto distante da KMP, perché i mismatch avvengono spesso nei primi caratteri del pattern. Nei casi con molti prefissi ripetuti, testi periodici o pattern quasi uguali a molte finestre del testo, ci si aspetta invece un vantaggio netto di KMP. Questa previsione è alla base della scelta dei casi sperimentali descritti nella sezione~\ref{sec:esperimenti}.
 
+La tabella~\ref{tab:complessita} riassume le prestazioni teoriche attese.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Algoritmo & Preprocessing & Ricerca & Totale & Spazio aggiuntivo \\
+\midrule
+Ingenuo & -- & $O(nm)$ & $O(nm)$ & $O(1)$ \\
+KMP & $O(m)$ & $O(n)$ & $O(n+m)$ & $O(m)$ \\
+\bottomrule
+\end{tabular}
+\caption{Confronto teorico tra algoritmo ingenuo e KMP.}
+\label{tab:complessita}
+\end{table}
+
 \section{Documentazione del codice}
 \subsection{Struttura dei moduli}
-Il progetto è composto solo da file Python eseguibili da terminale, senza notebook. La struttura è riportata nella tabella~\ref{tab:moduli}.
+Il progetto è composto solo da file Python eseguibili da terminale, senza notebook. La struttura è riportata nella tabella~\ref{tab:moduli}. La figura~\ref{fig:moduli} mostra invece le dipendenze principali tra i moduli.
 
 \begin{table}[H]
 \centering
@@ -75,13 +107,19 @@ Modulo & Responsabilità \\
 \texttt{naive\_matcher.py} & Implementa l'algoritmo ingenuo e restituisce occorrenze e confronti. \\
 \texttt{kmp\_matcher.py} & Implementa la funzione prefisso e la ricerca KMP. \\
 \texttt{generators.py} & Genera i dati sperimentali: casi casuali, periodici, molte occorrenze e caso sfavorevole. \\
-\texttt{tests.py} & Contiene test di correttezza su casi piccoli e controllabili. \\
-\texttt{experiments.py} & Esegue le misurazioni, produce CSV, tabella riassuntiva, informazioni sulla piattaforma e grafici. \\
+\texttt{experiments.py} & Esegue prima i controlli di correttezza e poi le misurazioni; produce CSV, tabella riassuntiva, informazioni sulla piattaforma e grafici. \\
 \bottomrule
 \end{tabular}
-\caption{Schema del contenuto dei moduli e delle loro interazioni.}
+\caption{Schema del contenuto dei moduli e delle loro responsabilità.}
 \label{tab:moduli}
 \end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.88\textwidth]{resources/figures/module_diagram.png}
+    \caption{Schema delle dipendenze principali tra i moduli del progetto.}
+    \label{fig:moduli}
+\end{figure}
 
 \subsection{Schema delle classi}
 Il progetto usa due semplici strutture dati, definite come \texttt{dataclass}, per rendere omogeneo il ritorno delle funzioni. Lo schema è riportato nella tabella~\ref{tab:classi}.
@@ -106,15 +144,41 @@ Le due implementazioni restituiscono la stessa informazione: lista delle occorre
 
 Non sono stati usati metodi di ricerca già pronti del linguaggio Python, come \texttt{find}, \texttt{index} o espressioni regolari. I confronti tra caratteri sono espliciti, in modo da rendere misurabile il lavoro svolto dagli algoritmi. Per KMP, il numero di confronti comprende anche il calcolo della funzione prefisso: questa scelta penalizza leggermente KMP nei casi piccoli, ma rappresenta correttamente il costo complessivo dell'algoritmo.
 
+Sono state usate solo strutture dati semplici del linguaggio: liste di interi per le occorrenze e per la funzione prefisso. La libreria \texttt{matplotlib} è usata soltanto per generare i grafici della relazione, non per implementare gli algoritmi confrontati.
+
 \subsection{Metodi principali}
 I metodi principali sono i seguenti:
 \begin{itemize}
     \item \texttt{naive\_string\_match(text, pattern)}: prova ogni possibile shift del pattern sul testo e restituisce tutte le posizioni valide;
     \item \texttt{compute\_prefix\_function(pattern)}: costruisce la tabella $\pi$ usata da KMP;
     \item \texttt{kmp\_string\_match(text, pattern)}: scandisce il testo una sola volta e usa la funzione prefisso per evitare confronti inutili;
+    \item \texttt{run\_correctness\_checks()}: esegue controlli preliminari su casi piccoli e sulla funzione prefisso di KMP;
     \item \texttt{generate\_rows(...)}: costruisce tutte le configurazioni sperimentali e registra le misure;
     \item \texttt{try\_make\_plots(...)}: genera i grafici usati nell'analisi.
 \end{itemize}
+
+\subsection{Test di correttezza}
+Prima degli esperimenti sono stati eseguiti controlli di correttezza su casi piccoli, in cui il risultato atteso è facilmente controllabile. Questi controlli sono contenuti in \texttt{experiments.py}, così da non avere un file separato dedicato ai test. Ogni controllo confronta l'output dell'algoritmo ingenuo con quello di KMP e verifica anche un caso noto della funzione prefisso. La tabella~\ref{tab:test-correttezza} riassume le principali situazioni controllate.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{0.38\textwidth}p{0.46\textwidth}}
+\toprule
+Caso testato & Motivazione \\
+\midrule
+Testo e pattern vuoti & Controlla il comportamento sui casi limite. \\
+Pattern vuoto e testo non vuoto & Verifica la gestione di input degeneri. \\
+Pattern assente dal testo & Controlla che non vengano prodotte false occorrenze. \\
+Pattern uguale all'intero testo & Controlla il riconoscimento all'inizio del testo. \\
+Occorrenze sovrapposte, per esempio \texttt{aba} in \texttt{abababa} & Verifica che non vengano saltate occorrenze valide. \\
+Molte ripetizioni, per esempio \texttt{aa} in \texttt{aaaaa} & Verifica il comportamento su testi altamente ripetitivi. \\
+Pattern con prefissi e suffissi non banali & Controlla il calcolo della funzione prefisso di KMP. \\
+\bottomrule
+\end{tabular}
+\caption{Principali test di correttezza eseguiti prima degli esperimenti.}
+\label{tab:test-correttezza}
+\end{table}
 
 \section{Descrizione degli esperimenti}
 \label{sec:esperimenti}
@@ -129,18 +193,40 @@ I casi considerati sono:
     \item \textbf{periodico}: testo e pattern con struttura ripetitiva.
 \end{itemize}
 
-I risultati completi sono salvati nel file \texttt{results/string\_matching\_results.csv}. La piattaforma di esecuzione dei risultati allegati è descritta in \texttt{results/platform\_info.txt}. Poiché i tempi dipendono dalla macchina e dall'interprete Python, l'analisi dà particolare importanza anche al numero di confronti, che è deterministico per gli input generati.
+\subsection{Ambiente di testing e misurazioni}
+Gli esperimenti allegati sono stati eseguiti nell'ambiente riportato nella tabella~\ref{tab:ambiente}. Le misure temporali riguardano soltanto la chiamata alla funzione di ricerca; la generazione degli input, la scrittura del CSV e la produzione dei grafici non sono comprese nel tempo misurato.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+Voce & Valore \\
+\midrule
+Versione Python & 3.13.5 \\
+Sistema operativo & Linux 4.4.0 \\
+Architettura & x86\_64 \\
+Processore & non disponibile \\
+RAM & 4.0 GB \\
+Timer usato & \texttt{time.perf\_counter()} \\
+Ripetizioni per configurazione & 7 \\
+\bottomrule
+\end{tabular}
+\caption{Ambiente di testing usato per produrre i risultati allegati.}
+\label{tab:ambiente}
+\end{table}
+
+I risultati completi sono allegati nella cartella \texttt{report/resources/data}. In particolare, il file \texttt{string\_matching\_results.csv} contiene tutte le misurazioni, mentre \texttt{summary\_n16000\_m32.csv} contiene la sintesi usata nella tabella~\ref{tab:sintesi-16000-32}. Poiché i tempi dipendono dalla macchina e dall'interprete Python, l'analisi dà particolare importanza anche al numero di confronti, che è deterministico per gli input generati.
 
 \section{Risultati sperimentali}
 La tabella~\ref{tab:sintesi-16000-32} riporta una sintesi per $n=16000$ e $m=32$, utile per confrontare i casi più significativi a parità di dimensione.
 
-\input{tables/summary_n16000_m32.tex}
+\input{resources/tables/summary_n16000_m32.tex}
 
 Nel caso casuale con alfabeto di 26 simboli, mostrato nella figura~\ref{fig:tempi-casuale26}, i tempi dei due algoritmi sono vicini. Questo è coerente con l'ipotesi teorica: con un alfabeto ampio, molti allineamenti dell'algoritmo ingenuo falliscono dopo pochi confronti.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{../results/figures/tempi_casuale_alfabeto_26.png}
+    \includegraphics[width=0.82\textwidth]{resources/figures/tempi_casuale_alfabeto_26.png}
     \caption{Tempi medi nel caso casuale con alfabeto di 26 simboli e $m=32$.}
     \label{fig:tempi-casuale26}
 \end{figure}
@@ -149,14 +235,14 @@ Il caso sfavorevole per l'algoritmo ingenuo è riportato nelle figure~\ref{fig:t
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{../results/figures/tempi_sfavorevole_ingenuo.png}
+    \includegraphics[width=0.82\textwidth]{resources/figures/tempi_sfavorevole_ingenuo.png}
     \caption{Tempi medi nel caso sfavorevole per l'algoritmo ingenuo, con $m=32$.}
     \label{fig:tempi-sfavorevole}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{../results/figures/confronti_sfavorevole_ingenuo.png}
+    \includegraphics[width=0.82\textwidth]{resources/figures/confronti_sfavorevole_ingenuo.png}
     \caption{Numero di confronti nel caso sfavorevole per l'algoritmo ingenuo, con $m=32$.}
     \label{fig:confronti-sfavorevole}
 \end{figure}
@@ -165,7 +251,7 @@ La figura~\ref{fig:confronti-molte} mostra il caso con molte occorrenze sovrappo
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.82\textwidth]{../results/figures/confronti_molte_occorrenze.png}
+    \includegraphics[width=0.82\textwidth]{resources/figures/confronti_molte_occorrenze.png}
     \caption{Numero di confronti nel caso con molte occorrenze sovrapposte, con $m=32$.}
     \label{fig:confronti-molte}
 \end{figure}
@@ -189,6 +275,12 @@ KMP richiede una fase preliminare di calcolo della funzione prefisso, ma questa 
 \begin{thebibliography}{9}
 \bibitem{clrs}
 T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, \emph{Introduction to Algorithms}, capitolo 32, String Matching.
+
+\bibitem{slides}
+Slide del corso di Laboratorio di Algoritmi e Strutture Dati, A.A. 2025/26.
+
+\bibitem{pythonperf}
+Documentazione Python, funzione \texttt{time.perf\_counter()}, \url{https://docs.python.org/3/library/time.html}.
 \end{thebibliography}
 
 \end{document}

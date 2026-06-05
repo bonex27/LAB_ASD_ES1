@@ -10,8 +10,7 @@ src/
   naive_matcher.py      algoritmo ingenuo
   kmp_matcher.py        funzione prefisso e algoritmo KMP
   generators.py         generatori dei casi sperimentali
-  tests.py              test di correttezza
-  experiments.py        esecuzione esperimenti, CSV, tabelle e grafici
+  experiments.py        controlli di correttezza, esperimenti, CSV, tabelle e grafici
 report/
   relazione.tex         relazione LaTeX completa
   relazione.pdf         PDF compilato della relazione
@@ -29,19 +28,5 @@ Dalla cartella principale del progetto:
 
 ```bash
 cd src
-python tests.py
 python experiments.py
 ```
-
-Gli algoritmi non usano `str.find`, `str.index`, espressioni regolari o librerie esterne per cercare il pattern nel testo.
-
-`matplotlib` è usato solo per generare i grafici. Se non è installato, gli esperimenti producono comunque i CSV.
-
-## Compilazione relazione
-
-```bash
-cd report
-pdflatex relazione.tex
-pdflatex relazione.tex
-```
-

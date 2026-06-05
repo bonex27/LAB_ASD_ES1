@@ -1,15 +1,19 @@
 """Esecuzione esperimenti per confrontare algoritmo ingenuo e KMP.
 
 Output principali:
-- results/string_matching_results.csv: tabella completa dei risultati.
-- results/summary_n16000_m32.csv: sintesi leggibile per il caso n=16000, m=32.
-- results/platform_info.txt: informazioni sulla piattaforma di esecuzione.
-- results/figures/*.png: grafici usati nella relazione.
+- report/resources/data/string_matching_results.csv: tabella completa dei risultati.
+- report/resources/data/summary_n16000_m32.csv: sintesi leggibile per il caso n=16000, m=32.
+- report/resources/data/platform_info.txt: informazioni sulla piattaforma di esecuzione.
+- report/resources/figures/*.png: grafici usati nella relazione.
+
+Per comodità viene mantenuta anche una copia degli stessi risultati nella
+cartella results/. La relazione LaTeX usa però solo path relativi a report/.
 """
 
 import csv
 import os
 import platform
+import shutil
 import statistics
 import time
 from typing import Callable, Dict, Iterable, List, Tuple
@@ -19,6 +23,40 @@ from kmp_matcher import kmp_string_match
 from naive_matcher import naive_string_match
 
 Matcher = Callable[[str, str], object]
+
+
+
+def run_correctness_checks() -> None:
+    """Esegue controlli di correttezza prima degli esperimenti.
+
+    I controlli sono tenuti nello stesso file degli esperimenti per evitare
+    un modulo separato di test nella consegna. Ogni caso confronta il risultato
+    dell'algoritmo ingenuo con quello di KMP e verifica anche un esempio noto
+    della funzione prefisso.
+    """
+    from kmp_matcher import compute_prefix_function
+
+    cases = [
+        ("", "", [0]),
+        ("abc", "", [0, 1, 2, 3]),
+        ("abc", "d", []),
+        ("abc", "abc", [0]),
+        ("abcabc", "abc", [0, 3]),
+        ("aaaaa", "aa", [0, 1, 2, 3]),
+        ("abc", "abcd", []),
+    ]
+
+    for text, pattern, expected in cases:
+        naive_result = naive_string_match(text, pattern).occurrences
+        kmp_result = kmp_string_match(text, pattern).occurrences
+        if naive_result != expected:
+            raise AssertionError(f"Algoritmo ingenuo non corretto per text={text!r}, pattern={pattern!r}")
+        if kmp_result != expected:
+            raise AssertionError(f"KMP non corretto per text={text!r}, pattern={pattern!r}")
+
+    prefix = compute_prefix_function("ABABACA")
+    if prefix.pi != [0, 0, 1, 2, 3, 0, 1]:
+        raise AssertionError("Funzione prefisso KMP non corretta per il pattern ABABACA")
 
 
 def measure(func: Matcher, text: str, pattern: str, repeats: int) -> Tuple[float, float, int, int]:
@@ -188,7 +226,31 @@ def try_make_plots(rows: List[Dict[str, object]], out_dir: str) -> None:
             plt.close()
 
 
+
+def sync_report_resources(base_dir: str, results_dir: str) -> None:
+    """Copia i risultati nella cartella report/resources usata dalla relazione."""
+    report_resources = os.path.join(base_dir, "report", "resources")
+    data_dir = os.path.join(report_resources, "data")
+    figures_dir = os.path.join(report_resources, "figures")
+    tables_dir = os.path.join(report_resources, "tables")
+    os.makedirs(data_dir, exist_ok=True)
+    os.makedirs(figures_dir, exist_ok=True)
+    os.makedirs(tables_dir, exist_ok=True)
+
+    for filename in ["string_matching_results.csv", "summary_n16000_m32.csv", "platform_info.txt"]:
+        src = os.path.join(results_dir, filename)
+        if os.path.exists(src):
+            shutil.copy2(src, os.path.join(data_dir, filename))
+
+    results_figures = os.path.join(results_dir, "figures")
+    if os.path.isdir(results_figures):
+        for filename in os.listdir(results_figures):
+            if filename.endswith(".png"):
+                shutil.copy2(os.path.join(results_figures, filename), os.path.join(figures_dir, filename))
+
+
 def main() -> None:
+    run_correctness_checks()
     sizes = [500, 1000, 2000, 4000, 8000, 16000]
     pattern_lengths = [4, 8, 16, 32]
     repeats = 7
@@ -198,9 +260,10 @@ def main() -> None:
     write_csv(rows, os.path.join(results_dir, "string_matching_results.csv"))
     summary = make_summary(rows, n=16000, m=32)
     write_csv(summary, os.path.join(results_dir, "summary_n16000_m32.csv"))
-    write_latex_summary_table(summary, os.path.join(base_dir, "report", "tables", "summary_n16000_m32.tex"))
+    write_latex_summary_table(summary, os.path.join(base_dir, "report", "resources", "tables", "summary_n16000_m32.tex"))
     write_platform_info(os.path.join(results_dir, "platform_info.txt"))
     try_make_plots(rows, os.path.join(results_dir, "figures"))
+    sync_report_resources(base_dir, results_dir)
     print(f"Esperimenti completati: {len(rows)} righe generate.")
 
 
