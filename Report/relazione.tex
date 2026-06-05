@@ -1,0 +1,194 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[italian]{babel}
+\usepackage[a4paper,left=3.0cm,right=3.0cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{amsmath,amssymb}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{array}
+
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    language=Python,
+    showstringspaces=false,
+    keywordstyle=\bfseries,
+    commentstyle=\itshape\color{gray}
+}
+
+\title{Confronto sperimentale tra algoritmo ingenuo e algoritmo KMP per lo string matching}
+\author{Nome Cognome}
+\date{Laboratorio di Algoritmi e Strutture Dati -- A.A. 2025/26}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Introduzione}
+Lo scopo dell'esercizio è confrontare due algoritmi per il problema dello \emph{string matching}: l'algoritmo ingenuo e l'algoritmo Knuth--Morris--Pratt, indicato nel seguito come KMP. Dato un testo $T$ di lunghezza $n$ e un pattern $P$ di lunghezza $m$, il problema consiste nel determinare tutte le posizioni del testo in cui il pattern compare esattamente.
+
+Il confronto non si limita alla sola verifica della correttezza. L'obiettivo principale è osservare sperimentalmente in quali condizioni i due algoritmi hanno comportamento simile e in quali condizioni KMP sfrutta meglio le informazioni già ottenute durante i confronti. Per questo motivo sono stati costruiti input di natura diversa: casuali, periodici, con molte occorrenze sovrapposte e sfavorevoli per l'approccio ingenuo.
+
+\section{Caratteristiche teoriche degli algoritmi}
+\subsection{Algoritmo ingenuo}
+L'algoritmo ingenuo prova tutti gli allineamenti possibili del pattern rispetto al testo. Per ogni posizione $s$ compresa tra $0$ e $n-m$, confronta i caratteri $P[0], P[1], \ldots, P[m-1]$ con la sottostringa $T[s], T[s+1], \ldots, T[s+m-1]$ finché trova una differenza oppure finché tutto il pattern viene riconosciuto.
+
+Nel caso peggiore, ogni allineamento può richiedere quasi $m$ confronti. La complessità temporale attesa nel caso peggiore è quindi:
+\[
+    O((n-m+1)m),
+\]
+che viene spesso indicata come $O(nm)$. Il vantaggio principale dell'algoritmo ingenuo è la semplicità implementativa. Lo svantaggio è che, dopo un mismatch, l'algoritmo non riusa le informazioni ottenute nei confronti precedenti e riparte dal successivo allineamento.
+
+\subsection{Algoritmo KMP}
+KMP evita di ripetere confronti già implicitamente effettuati. Prima della ricerca calcola la funzione prefisso $\pi$ del pattern. Il valore $\pi[q]$ indica la lunghezza del più lungo prefisso proprio di $P[0 \ldots q]$ che è anche suffisso della stessa porzione di pattern.
+
+Durante la scansione del testo, quando avviene un mismatch, KMP non riparte necessariamente dal primo carattere del pattern: usa $\pi$ per stabilire quale prefisso del pattern può ancora essere compatibile con il testo già letto. Il costo della fase di preprocessing è $O(m)$, mentre la ricerca richiede $O(n)$. Il costo complessivo è quindi:
+\[
+    O(n + m).
+\]
+
+\subsection{Prestazioni attese}
+Sui testi casuali, soprattutto con alfabeti grandi, ci si aspetta che l'algoritmo ingenuo non sia sempre molto distante da KMP, perché i mismatch avvengono spesso nei primi caratteri del pattern. Nei casi con molti prefissi ripetuti, testi periodici o pattern quasi uguali a molte finestre del testo, ci si aspetta invece un vantaggio netto di KMP. Questa previsione è alla base della scelta dei casi sperimentali descritti nella sezione~\ref{sec:esperimenti}.
+
+\section{Documentazione del codice}
+\subsection{Struttura dei moduli}
+Il progetto è composto solo da file Python eseguibili da terminale, senza notebook. La struttura è riportata nella tabella~\ref{tab:moduli}.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{0.32\textwidth}p{0.58\textwidth}}
+\toprule
+Modulo & Responsabilità \\
+\midrule
+\texttt{matcher\_types.py} & Definisce le strutture dati di ritorno condivise dagli algoritmi. \\
+\texttt{naive\_matcher.py} & Implementa l'algoritmo ingenuo e restituisce occorrenze e confronti. \\
+\texttt{kmp\_matcher.py} & Implementa la funzione prefisso e la ricerca KMP. \\
+\texttt{generators.py} & Genera i dati sperimentali: casi casuali, periodici, molte occorrenze e caso sfavorevole. \\
+\texttt{tests.py} & Contiene test di correttezza su casi piccoli e controllabili. \\
+\texttt{experiments.py} & Esegue le misurazioni, produce CSV, tabella riassuntiva, informazioni sulla piattaforma e grafici. \\
+\bottomrule
+\end{tabular}
+\caption{Schema del contenuto dei moduli e delle loro interazioni.}
+\label{tab:moduli}
+\end{table}
+
+\subsection{Schema delle classi}
+Il progetto usa due semplici strutture dati, definite come \texttt{dataclass}, per rendere omogeneo il ritorno delle funzioni. Lo schema è riportato nella tabella~\ref{tab:classi}.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{p{0.25\textwidth}p{0.25\textwidth}p{0.4\textwidth}}
+\toprule
+Classe & Campi & Significato \\
+\midrule
+\texttt{MatchResult} & \texttt{occurrences}, \texttt{comparisons} & Risultato di una ricerca: posizioni iniziali trovate e numero di confronti tra caratteri. \\
+\texttt{PrefixResult} & \texttt{pi}, \texttt{comparisons} & Risultato del preprocessing di KMP: funzione prefisso e confronti effettuati per costruirla. \\
+\bottomrule
+\end{tabular}
+\caption{Schema delle classi utilizzate nel progetto.}
+\label{tab:classi}
+\end{table}
+
+\subsection{Scelte implementative}
+Le due implementazioni restituiscono la stessa informazione: lista delle occorrenze e numero di confronti tra caratteri. Questa scelta permette di confrontare sia il tempo effettivo di esecuzione sia una misura più vicina all'analisi teorica dell'algoritmo.
+
+Non sono stati usati metodi di ricerca già pronti del linguaggio Python, come \texttt{find}, \texttt{index} o espressioni regolari. I confronti tra caratteri sono espliciti, in modo da rendere misurabile il lavoro svolto dagli algoritmi. Per KMP, il numero di confronti comprende anche il calcolo della funzione prefisso: questa scelta penalizza leggermente KMP nei casi piccoli, ma rappresenta correttamente il costo complessivo dell'algoritmo.
+
+\subsection{Metodi principali}
+I metodi principali sono i seguenti:
+\begin{itemize}
+    \item \texttt{naive\_string\_match(text, pattern)}: prova ogni possibile shift del pattern sul testo e restituisce tutte le posizioni valide;
+    \item \texttt{compute\_prefix\_function(pattern)}: costruisce la tabella $\pi$ usata da KMP;
+    \item \texttt{kmp\_string\_match(text, pattern)}: scandisce il testo una sola volta e usa la funzione prefisso per evitare confronti inutili;
+    \item \texttt{generate\_rows(...)}: costruisce tutte le configurazioni sperimentali e registra le misure;
+    \item \texttt{try\_make\_plots(...)}: genera i grafici usati nell'analisi.
+\end{itemize}
+
+\section{Descrizione degli esperimenti}
+\label{sec:esperimenti}
+Gli esperimenti sono costruiti variando la lunghezza del testo $n$, la lunghezza del pattern $m$ e la tipologia di input. Sono stati usati i valori $n \in \{500,1000,2000,4000,8000,16000\}$ e $m \in \{4,8,16,32\}$. Per ogni configurazione vengono eseguite 7 ripetizioni e viene salvato il tempo medio misurato con \texttt{time.perf\_counter}. Inoltre viene registrato il numero di confronti tra caratteri.
+
+I casi considerati sono:
+\begin{itemize}
+    \item \textbf{casuale con alfabeto di 4 simboli}: simula testi con più ripetizioni;
+    \item \textbf{casuale con alfabeto di 26 simboli}: simula testi in cui i mismatch tendono ad avvenire rapidamente;
+    \item \textbf{sfavorevole per l'ingenuo}: testo composto da molti caratteri uguali e pattern che fallisce sull'ultimo carattere;
+    \item \textbf{molte occorrenze}: testo e pattern composti dallo stesso carattere, con numerose occorrenze sovrapposte;
+    \item \textbf{periodico}: testo e pattern con struttura ripetitiva.
+\end{itemize}
+
+I risultati completi sono salvati nel file \texttt{results/string\_matching\_results.csv}. La piattaforma di esecuzione dei risultati allegati è descritta in \texttt{results/platform\_info.txt}. Poiché i tempi dipendono dalla macchina e dall'interprete Python, l'analisi dà particolare importanza anche al numero di confronti, che è deterministico per gli input generati.
+
+\section{Risultati sperimentali}
+La tabella~\ref{tab:sintesi-16000-32} riporta una sintesi per $n=16000$ e $m=32$, utile per confrontare i casi più significativi a parità di dimensione.
+
+\input{tables/summary_n16000_m32.tex}
+
+Nel caso casuale con alfabeto di 26 simboli, mostrato nella figura~\ref{fig:tempi-casuale26}, i tempi dei due algoritmi sono vicini. Questo è coerente con l'ipotesi teorica: con un alfabeto ampio, molti allineamenti dell'algoritmo ingenuo falliscono dopo pochi confronti.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{../results/figures/tempi_casuale_alfabeto_26.png}
+    \caption{Tempi medi nel caso casuale con alfabeto di 26 simboli e $m=32$.}
+    \label{fig:tempi-casuale26}
+\end{figure}
+
+Il caso sfavorevole per l'algoritmo ingenuo è riportato nelle figure~\ref{fig:tempi-sfavorevole} e~\ref{fig:confronti-sfavorevole}. Qui il testo è formato solo da caratteri uguali e il pattern fallisce sull'ultimo carattere. L'algoritmo ingenuo effettua molti confronti per quasi ogni allineamento, mentre KMP riesce a riusare l'informazione contenuta nei prefissi del pattern.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{../results/figures/tempi_sfavorevole_ingenuo.png}
+    \caption{Tempi medi nel caso sfavorevole per l'algoritmo ingenuo, con $m=32$.}
+    \label{fig:tempi-sfavorevole}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{../results/figures/confronti_sfavorevole_ingenuo.png}
+    \caption{Numero di confronti nel caso sfavorevole per l'algoritmo ingenuo, con $m=32$.}
+    \label{fig:confronti-sfavorevole}
+\end{figure}
+
+La figura~\ref{fig:confronti-molte} mostra il caso con molte occorrenze sovrapposte. Anche in questo caso l'algoritmo ingenuo deve confrontare l'intero pattern in molti allineamenti, mentre KMP mantiene un andamento molto più regolare.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{../results/figures/confronti_molte_occorrenze.png}
+    \caption{Numero di confronti nel caso con molte occorrenze sovrapposte, con $m=32$.}
+    \label{fig:confronti-molte}
+\end{figure}
+
+\section{Analisi dei risultati}
+I risultati confermano le aspettative teoriche. Nel caso casuale con alfabeto di 26 simboli e $n=16000$, l'algoritmo ingenuo impiega circa 1.32 ms, mentre KMP impiega circa 1.00 ms. Il numero di confronti è praticamente equivalente: 16636 per l'algoritmo ingenuo e 16699 per KMP. In questo caso KMP non ha un vantaggio netto perché l'algoritmo ingenuo fallisce spesso al primo o al secondo carattere.
+
+La differenza diventa evidente nei casi costruiti per contenere molte ripetizioni. Nel caso sfavorevole per l'algoritmo ingenuo, sempre con $n=16000$ e $m=32$, l'algoritmo ingenuo effettua 511008 confronti, mentre KMP ne effettua 48058. Il rapporto è circa 10.63 a favore di KMP. Anche il tempo medio segue lo stesso andamento: circa 31.83 ms per l'algoritmo ingenuo contro circa 2.49 ms per KMP.
+
+Il caso con molte occorrenze sovrapposte è ancora più netto: l'algoritmo ingenuo effettua 511008 confronti e KMP 32060. Il rapporto tra i confronti è circa 15.94. Questo risultato mostra bene il limite dell'approccio ingenuo: quando il pattern coincide con molte finestre del testo, ogni allineamento costa quasi $m$ confronti.
+
+Il caso periodico si colloca in una posizione intermedia. Per $n=16000$ e $m=32$, l'algoritmo ingenuo effettua 65476 confronti e KMP 35259. Il vantaggio di KMP è presente ma meno marcato rispetto ai casi costruiti con soli caratteri uguali. Questo comportamento è ragionevole: la periodicità genera riuso dell'informazione, ma non obbliga l'algoritmo ingenuo a confrontare sempre l'intero pattern.
+
+Nel complesso, il numero di confronti è la misura più pulita per leggere il comportamento algoritmico. I tempi confermano l'andamento, ma sono più rumorosi perché dipendono dall'interprete Python, dalla piattaforma e dal carico della macchina durante l'esecuzione. Il punto importante è che KMP ha un costo più stabile al variare del tipo di input, mentre l'algoritmo ingenuo può essere competitivo sui casi casuali ma degrada fortemente sui casi con ripetizioni sfavorevoli.
+
+\section{Conclusioni}
+L'esperimento mostra che l'algoritmo ingenuo è semplice e, su input casuali con mismatch rapidi, può avere prestazioni vicine a KMP. Tuttavia il suo comportamento peggiora sensibilmente quando il testo e il pattern contengono molte ripetizioni o molte occorrenze sovrapposte. In questi casi l'algoritmo ripete confronti già sostanzialmente noti.
+
+KMP richiede una fase preliminare di calcolo della funzione prefisso, ma questa informazione permette di evitare ripetizioni e rende l'algoritmo più stabile. I risultati sperimentali sono quindi coerenti con l'analisi teorica: l'algoritmo ingenuo può arrivare a $O(nm)$ nel caso peggiore, mentre KMP mantiene un comportamento lineare in $O(n+m)$.
+
+\begin{thebibliography}{9}
+\bibitem{clrs}
+T. H. Cormen, C. E. Leiserson, R. L. Rivest, C. Stein, \emph{Introduction to Algorithms}, capitolo 32, String Matching.
+\end{thebibliography}
+
+\end{document}
