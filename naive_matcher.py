@@ -1,7 +1,5 @@
 """Algoritmo ingenuo per lo string matching.
 
-Il codice non usa funzioni di ricerca gia' pronte: confronta esplicitamente
-pattern e testo e restituisce tutte le occorrenze del pattern nel testo.
 """
 
 from typing import List
@@ -10,8 +8,7 @@ from matcher_types import MatchResult
 
 
 def naive_string_match(text: str, pattern: str) -> MatchResult:
-    """Restituisce tutte le posizioni in cui pattern compare in text.
-
+    """
     Args:
         text: stringa in cui cercare.
         pattern: stringa da cercare.

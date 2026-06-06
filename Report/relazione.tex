@@ -36,7 +36,7 @@
 \section{Introduzione}
 Lo scopo dell'esercizio è confrontare due algoritmi per il problema dello \emph{string matching}: l'algoritmo ingenuo e l'algoritmo Knuth--Morris--Pratt, indicato nel seguito come KMP. Dato un testo $T$ di lunghezza $n$ e un pattern $P$ di lunghezza $m$, il problema consiste nel determinare tutte le posizioni del testo in cui il pattern compare esattamente.
 
-Il confronto non si limita alla sola verifica della correttezza. L'obiettivo principale è osservare sperimentalmente in quali condizioni i due algoritmi hanno comportamento simile e in quali condizioni KMP sfrutta meglio le informazioni già ottenute durante i confronti. Per questo motivo sono stati costruiti input di natura diversa: casuali, periodici, con molte occorrenze sovrapposte e sfavorevoli per l'approccio ingenuo.
+Il confronto non si limita alla sola verifica della correttezza. L'obiettivo principale è osservare in quali condizioni i due algoritmi hanno comportamento simile e in quali condizioni KMP sfrutta meglio le informazioni già ottenute durante i confronti. Per questo motivo sono stati costruiti input di natura diversa: casuali, periodici, con molte occorrenze sovrapposte e sfavorevoli per l'approccio ingenuo.
 
 \section{Caratteristiche teoriche degli algoritmi}
 \subsection{Algoritmo ingenuo}
@@ -74,7 +74,7 @@ $\pi[q]$ & 0 & 0 & 1 & 2 & 3 & 0 & 1 \\
 \end{table}
 
 \subsection{Prestazioni attese}
-Sui testi casuali, soprattutto con alfabeti grandi, ci si aspetta che l'algoritmo ingenuo non sia sempre molto distante da KMP, perché i mismatch avvengono spesso nei primi caratteri del pattern. Nei casi con molti prefissi ripetuti, testi periodici o pattern quasi uguali a molte finestre del testo, ci si aspetta invece un vantaggio netto di KMP. Questa previsione è alla base della scelta dei casi sperimentali descritti nella sezione~\ref{sec:esperimenti}.
+Sui testi casuali, soprattutto con alfabeti grandi, ci si aspetta che l'algoritmo ingenuo non sia sempre molto distante da KMP, perché i mismatch avvengono spesso nei primi caratteri del pattern. Nei casi con molti prefissi ripetuti, testi periodici o pattern quasi uguali a molte finestre del testo, ci si aspetta invece un vantaggio netto di KMP.
 
 La tabella~\ref{tab:complessita} riassume le prestazioni teoriche attese.
 
@@ -151,7 +151,7 @@ I metodi principali sono i seguenti:
     \item \texttt{naive\_string\_match(text, pattern)}: prova ogni possibile shift del pattern sul testo e restituisce tutte le posizioni valide;
     \item \texttt{compute\_prefix\_function(pattern)}: costruisce la tabella $\pi$ usata da KMP;
     \item \texttt{kmp\_string\_match(text, pattern)}: scandisce il testo una sola volta e usa la funzione prefisso per evitare confronti inutili;
-    \item \texttt{run\_correctness\_checks()}: esegue controlli preliminari su casi piccoli e sulla funzione prefisso di KMP;
+    \item \texttt{run\_correctness\_checks()}: esegue controlli preliminari su casi piccoli e sulla funzione prefisso di KMP, tale funzione è una specie di unit test riguardante in due algoritmi;
     \item \texttt{generate\_rows(...)}: costruisce tutte le configurazioni sperimentali e registra le misure;
     \item \texttt{try\_make\_plots(...)}: genera i grafici usati nell'analisi.
 \end{itemize}
@@ -280,5 +280,7 @@ Documentazione Python, funzione \texttt{time.perf\_counter()}, \url{https://docs
 \end{thebibliography}
 
 \end{document}
+
+
 
 

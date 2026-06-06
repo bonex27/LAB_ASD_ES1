@@ -2,12 +2,10 @@
 
 Output principali:
 - report/resources/data/string_matching_results.csv: tabella completa dei risultati.
-- report/resources/data/summary_n16000_m32.csv: sintesi leggibile per il caso n=16000, m=32.
+- report/resources/data/summary_n16000_m32.csv: sintesi per il caso n=16000, m=32.
 - report/resources/data/platform_info.txt: informazioni sulla piattaforma di esecuzione.
 - report/resources/figures/*.png: grafici usati nella relazione.
 
-Per comodità viene mantenuta anche una copia degli stessi risultati nella
-cartella results/. La relazione LaTeX usa però solo path relativi a report/.
 """
 
 import csv
@@ -30,10 +28,8 @@ Matcher = Callable[[str, str], object]
 def run_correctness_checks() -> None:
     """Esegue controlli di correttezza prima degli esperimenti.
 
-    I controlli sono tenuti nello stesso file degli esperimenti per evitare
-    un modulo separato di test nella consegna. Ogni caso confronta il risultato
-    dell'algoritmo ingenuo con quello di KMP e verifica anche un esempio noto
-    della funzione prefisso.
+    Ogni caso confronta il risultato
+    dell'algoritmo ingenuo con quello di KMP.
     """
     from kmp_matcher import compute_prefix_function
 
@@ -63,8 +59,6 @@ def run_correctness_checks() -> None:
 def measure(func: Matcher, text: str, pattern: str, repeats: int) -> Tuple[float, float, int, int]:
     """Misura tempo medio, deviazione standard, confronti e occorrenze.
 
-    I confronti e il numero di occorrenze sono deterministici per gli stessi
-    dati in input; per questo vengono letti dall'ultima esecuzione.
     """
     times: List[float] = []
     last_result = None
@@ -253,6 +247,7 @@ def sync_report_resources(base_dir: str, results_dir: str) -> None:
 
 
 def main() -> None:
+    print("Esecuzione dei test...")
     parser = argparse.ArgumentParser(description="Confronto tra algoritmo ingenuo e KMP per string matching.")
     parser.add_argument("--quick", action="store_true", help="esegue una versione ridotta degli esperimenti, utile su PythonAnywhere free")
     args = parser.parse_args()
@@ -267,7 +262,7 @@ def main() -> None:
         pattern_lengths = [4, 8, 16, 32]
         repeats = 7
     rows = generate_rows(sizes, pattern_lengths, repeats)
-    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ""))
     results_dir = os.path.join(base_dir, "results")
     write_csv(rows, os.path.join(results_dir, "string_matching_results.csv"))
     summary_n = 4000 if args.quick else 16000

@@ -1,7 +1,4 @@
 """Algoritmo KMP per lo string matching.
-
-Implementazione autonoma della funzione prefisso e della ricerca.
-Non vengono usate librerie o metodi di ricerca gia' pronti.
 """
 
 from typing import List
