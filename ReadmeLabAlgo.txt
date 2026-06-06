@@ -6,9 +6,9 @@ Vogliamo confrontare vari algoritmi per effettuare string matching : algoritmo i
 Come eseguire il progetto su PythonAnywhere:
 1. Aprire una console Bash.
 2. Entrare nella cartella del progetto:
-   cd esercizio1_string_matching
+   cd LaboratorioAlgoritmiEs1
 3. Eseguire il programma principale:
-   python main.py
+   python experiments.py
 
 
 Output prodotti:
